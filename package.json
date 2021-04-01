@@ -1,0 +1,27 @@
+{
+  "name": "docusaurus-remark-plugin-codetabs",
+  "version": "1.0.0-alpha.0",
+  "description": "Remark plugin for fast multi-language code tab creation for Docusaurus",
+  "main": "src/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/duanwilliam/docusaurus-remark-plugin-codetabs.git"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {
+    "@docusaurus/core": "^2.0.0-alpha.72 || ^2.0.0",
+    "react": "^16.8.4 || ^17.0.0",
+    "react-dom": "^16.8.4 || ^17.0.0"
+  },
+  "engines": {
+    "node": ">=12.13.0"
+  }
+}
