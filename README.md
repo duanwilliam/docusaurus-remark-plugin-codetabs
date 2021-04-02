@@ -74,7 +74,7 @@ Leading and trailing whitespace of the overall inner code block content is ignor
     console.log('');
     ```
 
-### Tab Labels
+### Tab labels
 
 A default label is assigned to each tab based on its language; however, a `label=` tag can be specified in the metastring to customize the label for a tab. Labels must be delimited by either single or double quotes.
 
