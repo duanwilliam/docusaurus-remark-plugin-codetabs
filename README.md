@@ -80,8 +80,6 @@ Each code tab is delimited by the standard code block convention `````` ```[lang
 
 These inner code blocks deviate in syntax from normal code blocks, however, in that they do not have closing ` ``` `; instead, the end of each inner code block is inferred by the beginning of the next, or the end of the `codetabs` code block.
 
-Leading and trailing whitespace of the overall inner code block content is ignored.
-
     ```md codetabs
     ``` jsx
     <MyComponent />
@@ -93,7 +91,7 @@ Leading and trailing whitespace of the overall inner code block content is ignor
 
 A default label is assigned to each tab based on its language; however, a `label=` tag can be specified in the metastring to customize the label for a tab. Labels must be delimited by either single or double quotes.
 
-    ```. codetabs
+    ```md codetabs
     ```python label="Python3"
     ```
 
@@ -109,7 +107,7 @@ Comment delimiters **must** be indented to avoid consuming the wrapping `codetab
 
 This feature really wasn't intended and probably shouldn't (need to be) used much but hey it's there.
 
-    ```. codetabs
+    ```md codetabs
         ```
     this is a comment. it will not show up.
     ```
