@@ -56,9 +56,11 @@ const transformNode = (node, { sync, tabLabels, fileBasePath }) => {
 
   const labels =  matches.map(({label}) => label);
 
-  const groupIdProp = sync
-    ? `groupId="codetabs-${labels.join('-')}"`
-    : ''
+  const groupIdProp = sync === 'all'
+    ? 'groupId="codetabs"'
+    : sync
+      ? `groupId="codetabs-${labels.join('-')}"`
+      : ''
   ;
 
   let res = [
