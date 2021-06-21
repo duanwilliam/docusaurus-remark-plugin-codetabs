@@ -1,36 +1,60 @@
-let defaultTabLabels = require('./languages.js');
+const fs = require('fs');
+const path = require('path');
+
+const defaultTabLabels = require('./languages.js');
 
 const languageTabRegex = /(?:^\s*```[^\S\r\n]*(\S+)(?:$|(?:\s+(.*)$))([\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/mg;
 
 const tabLabelRegex = /label=(["'])(.*?)\1/;
 
-const transformNode = (node, sync) => {
+const fileRegex = /file=(["'])(.*?)\1/;
+const trimLeadingTrailingNewlinesRegex = /^[\r\n]+|[\r\n]+$/g;
+const insertFileContentsRegex = /^[^\S\r\n]*{%[^\S\r\n]?FILE[^\S\r\n]?}[^\S\r\n]*$/m;
+
+const transformNode = (node, { sync, tabLabels, fileBasePath }) => {
   // regex = [ full match, language, metastrings, code block ]
   // map => [ code block, language, metastrings, tab label ]
   // reduce => eliminate duplicate tabs
+  // map => incorporate file contents (if applicable)
   let seenLabels = {};
   const matches = [...node.value.matchAll(languageTabRegex)]
-    .map(([, language, metastring, codeBlock]) => [
-      codeBlock.trim(),
-      language || '',
-      metastring || '',
-      metastring?.match(tabLabelRegex)?.[2] || defaultTabLabels?.[language] || language ||defaultTabLabels[''],
-    ]).reduce((accum, match) => {
-      const label = match[3];
-      if(!seenLabels.hasOwnProperty(label)) {
+    .map(([, language, metastring, codeBlock]) => ({
+      codeBlock: codeBlock.trim(),
+      language: language || '',
+      metastring: metastring || '',
+      label: metastring?.match(tabLabelRegex)?.[2] || tabLabels?.[language] || language || tabLabels[''],
+    })).reduce((accum, match) => {
+      if(!seenLabels.hasOwnProperty(match.label)) {
         accum.push(match);
-        seenLabels[label] = true;
+        seenLabels[match.label] = true;
       }
       return accum;
-    }, [])
-  ;
+    }, []).map((match) => {
+      const { codeBlock, metastring } = match;
+      const file = metastring?.match(fileRegex)?.[2];
+      if(!file) return match;
+      let fileContent;
+      try {
+        fileContent = fs.readFileSync(path.resolve(fileBasePath, file), {
+          encoding: 'utf8',
+        }).toString().replace(trimLeadingTrailingNewlinesRegex, '');
+      } catch(e) {
+        console.log(e);
+        fileContent = `Failed to load contents from file ${file}`;
+      }
+      newCodeBlock = insertFileContentsRegex.test(codeBlock)
+        ? codeBlock.replace(insertFileContentsRegex, fileContent)
+        : fileContent;
+
+      return {...match, codeBlock: newCodeBlock};
+  });
     
   // no valid entries found
   if(matches.length === 0) {
     return null;
   }
 
-  const labels =  matches.map(([,,,label]) => label);
+  const labels =  matches.map(({label}) => label);
 
   const groupIdProp = sync
     ? `groupId="codetabs-${labels.join('-')}"`
@@ -42,7 +66,7 @@ const transformNode = (node, sync) => {
       type: 'jsx',
       value:
         `<Tabs
-          defaultValue="${matches[0][3]}"
+          defaultValue="${matches[0].label}"
           ${groupIdProp}
           values={[${labels.map((label) =>
             `{label: "${label}", value: "${label}"}`
@@ -51,7 +75,7 @@ const transformNode = (node, sync) => {
     },
   ];
 
-  matches.forEach(([codeBlock, language, metastring, label]) => {
+  matches.forEach(({codeBlock, language, metastring, label}) => {
     res.push(...[
       {
         type: 'jsx',
@@ -99,8 +123,15 @@ const attacher = (options = {}) => {
   const {
     sync = false,
     customLabels = {},
+    fileBasePath = '.',
   } = options;
-  defaultTabLabels = {...defaultTabLabels, ...customLabels};
+
+  const tabLabels = {...defaultTabLabels, ...customLabels};
+  options = {
+    sync: sync,
+    fileBasePath: fileBasePath,
+    tabLabels: tabLabels,
+  };
 
   let transformed = false;
   let importTabsNodeExists = false;
@@ -116,7 +147,7 @@ const attacher = (options = {}) => {
 
     if (isCodetabsNode(node)) {
       transformed = true;
-      return transformNode(node, sync);
+      return transformNode(node, options);
     }
     if (Array.isArray(node.children)) {
       let index = 0;
