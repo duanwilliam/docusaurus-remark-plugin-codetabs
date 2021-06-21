@@ -2,6 +2,13 @@
   "name": "docusaurus-remark-plugin-codetabs",
   "version": "1.0.0-alpha.0",
   "description": "Remark plugin for fast multi-language code tab creation for Docusaurus",
+  "keywords": [
+    "docusaurus",
+    "remark",
+    "mdx",
+    "code block",
+    "tabs"
+  ],
   "main": "src/index.js",
   "publishConfig": {
     "access": "public"
