@@ -134,7 +134,7 @@ The filepath should be relative to `fileBasePath`, which can be configured in `o
 
 The following are suggestions for writing clean, maintainable code tabs with this plugin.
 
-- Leave newlines between code tabs and comments
+- Leave newlines between code tab and/or comment delimiters
 
       ```md codetabs
       ```js
@@ -146,7 +146,8 @@ The following are suggestions for writing clean, maintainable code tabs with thi
       ```ts
       console.log("Foo, bar!");
       ```
--Try to avoid indenting code tab delimiters, and leave empty lines between each code tab.
+
+- Avoid indenting code tab delimiters
       
     ```md codetabs
     
@@ -157,6 +158,8 @@ The following are suggestions for writing clean, maintainable code tabs with thi
     console.log("Hello, world!");
 
     ```
+
+- Avoid comments when possible
 
 ## Example
 
@@ -181,7 +184,7 @@ The following are suggestions for writing clean, maintainable code tabs with thi
     string label="C++11";
 
         ```
-    this is a comment.
+    this is an important comment.
 
     ```jsx title="Component.jsx"
     <Tabs>
