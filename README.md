@@ -52,7 +52,6 @@ module.exports = {
 | :-: | :-: | :-: | :-- |
 | `sync` | `boolean` \| `"all"` | `false` | Whether to sync tab choices for code tabs generated with the same labels (or all code tabs regardless of labels) |
 | `customLabels` | `Object` | `{}` | Custom default labels for languages. Entries are in the form `lang: label`. If the language already has a default label, this overrides it
-| `fileBasePath` | `string` | `.` | base path for sourcing files to insert into code tabs
 
 ### `sync`
 
@@ -63,10 +62,6 @@ If you're incrementally adding languages, you can have all code tabs with the sa
 ### `customLabels`
 
 Custom default labels can be defined here. See `src/languages.js` for the list of the defaults for this plugin.
-
-### `fileBasePath`
-
-Other files' contents can be sourced for these code tabs. Searching for those files will begin from `fileBasePath`.
 
 ## Syntax
 
@@ -110,24 +105,6 @@ This feature really wasn't intended and probably shouldn't (need to be) used muc
     ```md codetabs
         ```
     this is a comment. it will not show up.
-    ```
-
-## Sourcing code from files
-
-You can source code from files with the `file=` tag in the metastring. The file must be delimited by either single or double quotes.
-
-File contents have leading and trailing newlines stripped.
-
-The file contents will override other contents of the code tab, unless a line containing `{% FILE }` and whitespace exists; in this case, the file contents will be inserted at that line.
-
-The filepath should be relative to `fileBasePath`, which can be configured in `options`.
-
-    ```md codetabs
-    ```js file="example.js"
-    ```jsx file="example.jsx"
-    // below are the file contents
-    {% FILE }
-    // above are the file contents
     ```
 
 ## Suggested practices
@@ -199,5 +176,5 @@ The following are suggestions for writing clean, maintainable code tabs with thi
 ## TODO / ideas
 
 - better whitespace handling so code block content doesn't have to be on the same indent level as the `codetabs` wrapper
-- source only certain lines from a file
+- typescript
 - tests

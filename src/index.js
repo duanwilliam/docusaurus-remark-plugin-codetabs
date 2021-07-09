@@ -1,21 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-
 const defaultTabLabels = require('./languages.js');
 
 const languageTabRegex = /(?:^\s*```[^\S\r\n]*(\S+)(?:$|(?:\s+(.*)$))([\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/mg;
 
 const tabLabelRegex = /label=(["'])(.*?)\1/;
 
-const fileRegex = /file=(["'])(.*?)\1/;
-const trimLeadingTrailingNewlinesRegex = /^[\r\n]+|[\r\n]+$/g;
-const insertFileContentsRegex = /^[^\S\r\n]*{%[^\S\r\n]?FILE[^\S\r\n]?}[^\S\r\n]*$/m;
-
 const transformNode = (node, { sync, tabLabels, fileBasePath }) => {
   // regex = [ full match, language, metastrings, code block ]
   // map => [ code block, language, metastrings, tab label ]
   // reduce => eliminate duplicate tabs
-  // map => incorporate file contents (if applicable)
   let seenLabels = {};
   const matches = [...node.value.matchAll(languageTabRegex)]
     .map(([, language, metastring, codeBlock]) => ({
@@ -29,25 +21,7 @@ const transformNode = (node, { sync, tabLabels, fileBasePath }) => {
         seenLabels[match.label] = true;
       }
       return accum;
-    }, []).map((match) => {
-      const { codeBlock, metastring } = match;
-      const file = metastring?.match(fileRegex)?.[2];
-      if(!file) return match;
-      let fileContent;
-      try {
-        fileContent = fs.readFileSync(path.resolve(fileBasePath, file), {
-          encoding: 'utf8',
-        }).toString().replace(trimLeadingTrailingNewlinesRegex, '');
-      } catch(e) {
-        console.log(e);
-        fileContent = `Failed to load contents from file ${file}`;
-      }
-      newCodeBlock = insertFileContentsRegex.test(codeBlock)
-        ? codeBlock.replace(insertFileContentsRegex, fileContent)
-        : fileContent;
-
-      return {...match, codeBlock: newCodeBlock};
-  });
+    }, []);
     
   // no valid entries found
   if(matches.length === 0) {
@@ -117,13 +91,11 @@ const attacher = (options = {}) => {
   const {
     sync = false,
     customLabels = {},
-    fileBasePath = '.',
   } = options;
 
   const tabLabels = {...defaultTabLabels, ...customLabels};
   options = {
     sync: sync,
-    fileBasePath: fileBasePath,
     tabLabels: tabLabels,
   };
 
