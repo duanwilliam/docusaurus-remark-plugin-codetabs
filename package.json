@@ -1,6 +1,6 @@
 {
   "name": "docusaurus-remark-plugin-codetabs",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Remark plugin for fast multi-language code tab creation for Docusaurus",
   "keywords": [
     "docusaurus",
