@@ -1,20 +1,20 @@
 const defaultTabLabels = require('./languages.js');
 
-const languageTabRegex = /(?:^\s*```[^\S\r\n]*(\S+)(?:$|(?:\s+(.*)$))([\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/mg;
+const languageTabRegex = /(?:^\s*```[^\S\r\n]*(?<language>\S+)(?:$|(?:\s+(?<metastring>.*)$))(?<codeBlock>[\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/mg;
 
-const tabLabelRegex = /label=(["'])(.*?)\1/;
+const tabLabelRegex = /label=(["'])(?<label>.*?)\1/;
 
-const transformNode = (node, { sync, tabLabels, fileBasePath }) => {
+const transformNode = (node, { sync, tabLabels }) => {
   // regex = [ full match, language, metastrings, code block ]
   // map => [ code block, language, metastrings, tab label ]
   // reduce => eliminate duplicate tabs
   let seenLabels = {};
   const matches = [...node.value.matchAll(languageTabRegex)]
-    .map(([, language, metastring, codeBlock]) => ({
+    .map(({groups: {language, metastring, codeBlock}}) => ({
       codeBlock: codeBlock.trim(),
       language: language || '',
       metastring: metastring || '',
-      label: metastring?.match(tabLabelRegex)?.[2] || tabLabels?.[language] || language || tabLabels[''],
+      label: metastring?.match(tabLabelRegex)?.groups.label || tabLabels?.[language] || language || tabLabels[''],
     })).reduce((accum, match) => {
       if(!seenLabels.hasOwnProperty(match.label)) {
         accum.push(match);
@@ -42,7 +42,7 @@ const transformNode = (node, { sync, tabLabels, fileBasePath }) => {
       type: 'jsx',
       value:
         `<Tabs
-          defaultValue="${matches[0].label}"
+          defaultValue="${labels[0]}"
           ${groupIdProp}
           values={[${labels.map((label) =>
             `{label: "${label}", value: "${label}"}`
