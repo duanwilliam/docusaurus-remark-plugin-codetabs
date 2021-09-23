@@ -1,5 +1,4 @@
-module.exports = {
-  '': 'code',
+export const languages = {
   'atom': 'Atom',
   'bash': 'Bash',
   'c': 'C',
@@ -50,4 +49,6 @@ module.exports = {
   'xml': 'XML',
   'yaml': 'YAML',
   'yml': 'YAML',
-};
+} as const;
+
+export type Language = keyof typeof languages;

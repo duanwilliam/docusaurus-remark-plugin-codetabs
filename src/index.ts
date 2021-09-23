@@ -1,10 +1,11 @@
-const defaultTabLabels = require('./languages.js');
+import type { MDASTNode, Options } from './types';
+import { languages as defaultTabLabels } from './languages';
 
 const languageTabRegex = /(?:^\s*```[^\S\r\n]*(?<language>\S+)(?:$|(?:\s+(?<metastring>.*)$))(?<codeBlock>[\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/mg;
 
 const tabLabelRegex = /label=(["'])(?<label>.*?)\1/;
 
-const transformNode = (node, { sync, tabLabels }) => {
+const transformNode = (node, { sync, tabLabels }): MDASTNode[] | undefined => {
   // regex = [ full match, language, metastrings, code block ]
   // map => [ code block, language, metastrings, tab label ]
   // reduce => eliminate duplicate tabs
@@ -25,7 +26,7 @@ const transformNode = (node, { sync, tabLabels }) => {
     
   // no valid entries found
   if(matches.length === 0) {
-    return null;
+    return undefined;
   }
 
   const labels =  matches.map(({label}) => label);
@@ -49,7 +50,7 @@ const transformNode = (node, { sync, tabLabels }) => {
           )}]}
         >`,
     },
-  ];
+  ] as MDASTNode[];
 
   matches.forEach(({codeBlock, language, metastring, label}) => {
     res.push(...[
@@ -87,14 +88,14 @@ const importNode = {
 
 const isCodetabsNode = (node) => node.type === 'code' && node.meta === 'codetabs';
 
-const attacher = (options = {}) => {
+const attacher = (options = {} as Options) => {
   const {
     sync = false,
-    customLabels = {},
+    customLabels,
   } = options;
 
   const tabLabels = {...defaultTabLabels, ...customLabels};
-  options = {
+  const resolvedOptions = {
     sync: sync,
     tabLabels: tabLabels,
   };
@@ -102,14 +103,14 @@ const attacher = (options = {}) => {
   let transformed = false;
   let alreadyImported = false;
 
-  const transformer = (node) => {
+  const transformer = (node: MDASTNode): MDASTNode[] | undefined => {
     if (node.type === 'import' && node.value.includes('@theme/Tabs')) {
       alreadyImported = true;
     }
 
     if (isCodetabsNode(node)) {
       transformed = true;
-      return transformNode(node, options);
+      return transformNode(node, resolvedOptions);
     }
     if (Array.isArray(node.children)) {
       let index = 0;

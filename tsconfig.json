@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "target": "es6",
+    "module": "esnext",
+    "allowJs": true, // TODO: change
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationDir": "./dist",
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
