@@ -94,6 +94,17 @@ In the case of duplicate label tabs, the latter ones are ignored.
 
 The group id is generated from the resultant ordered set of labels, in the form ``codetabs-${uniqueLabels.join('-')}``. If `sync="all"`, the group id will always be `codetabs`.
 
+### Code location references
+
+Adding `codeLocation="https://github.com/duanwilliam/docusaurus-remark-plugin-codetabs/blob/main/README.md"` w
+
+    ```js title="index.js" codeLocation="https://github.com/duanwilliam/docusaurus-remark-plugin-codetabs/blob/main/README.md"
+    const main = () => {
+      console.log("Hello, world");
+    }
+
+![codeLocation Example](https://user-images.githubusercontent.com/19932401/162643898-e701eddd-f9e8-40da-b84c-a7682ebf05f9.png)
+
 ### Comments
 
 Comments are delimited by empty code block delimiters (` ``` `) on a separate line. Comment blocks will not be rendered.
