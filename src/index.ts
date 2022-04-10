@@ -1,9 +1,11 @@
-import type { MDASTNode, Options } from './types';
-import { languages as defaultTabLabels } from './languages';
+import type { MDASTNode, Options } from "./types";
+import { languages as defaultTabLabels } from "./languages";
 
-const languageTabRegex = /(?:^\s*```[^\S\r\n]*(?<language>\S+)(?:$|(?:\s+(?<metastring>.*)$))(?<codeBlock>[\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/mg;
+const languageTabRegex =
+  /(?:^\s*```[^\S\r\n]*(?<language>\S+)(?:$|(?:\s+(?<metastring>.*)$))(?<codeBlock>[\s\S]*?))(?:(?=(?:^\s*```\s*\S*|(?![\s\S]))))/gm;
 
 const tabLabelRegex = /label=(["'])(?<label>.*?)\1/;
+const referenceLabelRegex = /reference=(["'])(?<reference>.*?)\1/;
 
 const transformNode = (node, { sync, tabLabels }): MDASTNode[] | undefined => {
   // regex = [ full match, language, metastrings, code block ]
@@ -11,90 +13,111 @@ const transformNode = (node, { sync, tabLabels }): MDASTNode[] | undefined => {
   // reduce => eliminate duplicate tabs
   let seenLabels = {};
   const matches = [...node.value.matchAll(languageTabRegex)]
-    .map(({groups: {language, metastring, codeBlock}}) => ({
+    .map(({ groups: { language, metastring, codeBlock } }) => ({
       codeBlock: codeBlock.trim(),
-      language: language || '',
-      metastring: metastring || '',
-      label: metastring?.match(tabLabelRegex)?.groups.label || tabLabels?.[language] || language || tabLabels[''],
-    })).reduce((accum, match) => {
-      if(!seenLabels.hasOwnProperty(match.label)) {
+      language: language || "",
+      metastring: metastring || "",
+      label:
+        metastring?.match(tabLabelRegex)?.groups.label ||
+        tabLabels?.[language] ||
+        language ||
+        tabLabels[""],
+        codeLocation: metastring?.match(referenceLabelRegex)?.groups.reference
+    }))
+    .reduce((accum, match) => {
+      if (!seenLabels.hasOwnProperty(match.label)) {
         accum.push(match);
         seenLabels[match.label] = true;
       }
       return accum;
     }, []);
-    
+
   // no valid entries found
-  if(matches.length === 0) {
+  if (matches.length === 0) {
     return undefined;
   }
 
-  const labels =  matches.map(({label}) => label);
+  const labels = matches.map(({ label }) => label);
 
-  const groupIdProp = sync === 'all'
-    ? 'groupId="codetabs"'
-    : sync
-      ? `groupId="codetabs-${labels.join('-')}"`
-      : ''
-  ;
-
+  const groupIdProp =
+    sync === "all"
+      ? 'groupId="codetabs"'
+      : sync
+      ? `groupId="codetabs-${labels.join("-")}"`
+      : "";
   let res = [
     {
-      type: 'jsx',
-      value:
-        `<Tabs
+      type: "jsx",
+      value: `<Tabs
           defaultValue="${labels[0]}"
           ${groupIdProp}
-          values={[${labels.map((label) =>
-            `{label: "${label}", value: "${label}"}`
+          values={[${labels.map(
+            (label) => `{label: "${label}", value: "${label}"}`
           )}]}
         >`,
     },
   ] as MDASTNode[];
 
-  matches.forEach(({codeBlock, language, metastring, label}) => {
-    res.push(...[
-      {
-        type: 'jsx',
-        value:
-          `<TabItem value="${label}">`,
-      },
-      {
-        type: node.type,
-        meta: metastring,
-        lang: language,
-        value: codeBlock,
-      },
-      {
-        type: 'jsx',
-        value: `</TabItem>`,
-      },
-    ]);
-  });
+  const noteStyle = {
+    fontSize: ".9em",
+    fontWeight: 600,
+    color: "#0E75DD",
+    textAlign: "center",
+    paddingBottom: "13px",
+    textDecoration: "underline",
+  };
 
-  res.push(
-    {
-      type: 'jsx',
-      value: `</Tabs>`,
-    },
+  matches.forEach(
+    ({ codeBlock, language, metastring, label, codeLocation }) => {
+      res.push(
+        ...[
+          {
+            type: "jsx",
+            value: `<TabItem value="${label}">`,
+          },
+          {
+            type: node.type,
+            meta: metastring,
+            lang: language,
+            value: codeBlock,
+          },
+          {
+            type: "jsx",
+            value: codeLocation
+              ? `<div style={${JSON.stringify(
+                  noteStyle
+                )}}><a href="${codeLocation}" target="_blank">See full example on GitHub</a></div>`
+              : "",
+          },
+          {
+            type: "jsx",
+            value: `</TabItem>`,
+          },
+        ]
+      );
+    }
   );
-  return res;
-}
 
-const importNode = {
-  type: 'import',
-  value: "import Tabs from '@theme/Tabs';\nimport TabItem from '@theme/TabItem';",
+  res.push({
+    type: "jsx",
+    value: `</Tabs>`,
+  });
+  return res;
 };
 
-const isCodetabsNode = (node) => node.type === 'code' && node.meta === 'codetabs';
+const importNode = {
+  type: "import",
+  value:
+    "import Tabs from '@theme/Tabs';\nimport TabItem from '@theme/TabItem';",
+};
+
+const isCodetabsNode = (node) =>
+  node.type === "code" && node.meta === "codetabs";
 
 const attacher = (options = {} as Options) => {
-  const {
-    sync = false,
-    customLabels,
-  } = options;
+  const { sync = false, customLabels } = options;
 
-  const tabLabels = {...defaultTabLabels, ...customLabels};
+  const tabLabels = { ...defaultTabLabels, ...customLabels };
   const resolvedOptions = {
     sync: sync,
     tabLabels: tabLabels,
@@ -104,7 +127,7 @@ const attacher = (options = {} as Options) => {
   let alreadyImported = false;
 
   const transformer = (node: MDASTNode): MDASTNode[] | undefined => {
-    if (node.type === 'import' && node.value.includes('@theme/Tabs')) {
+    if (node.type === "import" && node.value.includes("@theme/Tabs")) {
       alreadyImported = true;
     }
 
@@ -124,7 +147,7 @@ const attacher = (options = {} as Options) => {
         }
       }
     }
-    if (node.type === 'root' && transformed && !alreadyImported) {
+    if (node.type === "root" && transformed && !alreadyImported) {
       node.children.unshift(importNode);
     }
     return undefined;
